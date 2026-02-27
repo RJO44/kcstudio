@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking Photo Booth</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --primary: #005640;      /* Tombol utama */
+  --primary-dark: #005640; /* Tombol hover */
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #005640;
+  --muted: #005640;
+  --radius: 18px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+body{background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* HEADER */
+header{
+  background-color: #005640;
+  color: #ffffff;
+  padding: 100px 20px 140px;
+  text-align: center;
+}
+header h1{font-size:3rem;margin-bottom:10px;}
+header p{opacity:.9;font-size:1.1rem}
+
+/* CONTAINER & CARD */
+.container{max-width:1100px;margin:-80px auto 60px;padding:20px;}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:30px;
+  box-shadow:0 25px 50px rgba(0,0,0,.08);
+  margin-bottom:32px;
+  opacity:0;
+  transform:translateY(30px);
+  transition:all .7s cubic-bezier(.22,1,.36,1);
+}
+.card.show{opacity:1; transform:translateY(0);}
+h2{margin-bottom:24px;color:var(--primary)}
+
+/* CHOICES */
+.choices{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:24px;
+}
+.choice{
+  border:2px solid #eef0f6;
+  border-radius:var(--radius);
+  padding:26px;
+  text-align:center;
+  background:#fafbff;
+  transition:all .5s cubic-bezier(.22,1,.36,1);
+  cursor:pointer;
+}
+.choice img{width:80px;margin-bottom:16px;}
+.choice:hover{border-color:var(--primary); transform:translateY(-10px) scale(1.03);}
+.choice.locked{pointer-events:none; opacity:.4;}
+.choice.selected{
+  border-color: var(--primary-dark);
+  box-shadow: 0 10px 25px rgba(201,162,39,0.3);
+  transform: scale(1.05);
+  transition: all 0.3s ease;
+}
+
+/* BUTTON */
+.btn{
+  padding:14px 30px;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+  background:var(--primary);
+  color:#ffffff;
+  font-weight:500;
+  transition:all .35s ease;
+}
+.btn:hover{
+  background:var(--primary-dark);
+  transform:scale(1.05);
+}
+
+/* FORM */
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+input,textarea{
+  padding:14px;
+  border-radius:14px;
+  border:1.5px solid #e5e7eb;
+  width:100%;
+  transition:all .3s;
+}
+input:focus,textarea:focus{
+  border-color:var(--primary);
+  outline:none;
+  box-shadow:0 0 10px rgba(201,162,39,0.2);
+}
+textarea{min-height:110px}
+.full{grid-column:1/-1}
+
+/* FOOTER */
+footer{text-align:center;color:var(--muted);padding:30px;font-size:0.95rem}
+
+/* MODAL */
+.modal{
+  position:fixed; inset:0; background:rgba(0,0,0,.55);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .45s ease; z-index:999;
+}
+.modal.show{opacity:1; pointer-events:auto;}
+.modal-content{
+  background:#fff;
+  border-radius:22px;
+  padding:30px;
+  max-width:560px;
+  transform:scale(.92) translateY(20px);
+  opacity:0;
+  transition:all .55s cubic-bezier(.22,1,.36,1);
+}
+.modal.show .modal-content{transform:scale(1) translateY(0); opacity:1;}
+
+/* SIDE MENU */
+#menuToggle{
+  position:fixed;top:20px;right:20px;width:35px;height:28px;
+  display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;z-index:1001;
+}
+#menuToggle .bar{
+  height:4px;width:100%;background:#fff;border-radius:4px;transition:all 0.4s ease;
+}
+#sideMenu{
+  position:fixed;top:0;right:-40%;width:40%;height:100%;
+  background:#005640; /* side menu gelap */
+  padding:40px 20px;
+  box-shadow:-5px 0 20px rgba(0,0,0,0.2);
+  transition:right 0.5s ease;
+  z-index:1000;
+  display:flex;flex-direction:column;
+}
+#sideMenu ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:20px;}
+#sideMenu ul li a{color:#fff;font-size:1.1rem;text-decoration:none;display:flex;align-items:center;gap:10px;transition:all 0.3s ease;}
+#sideMenu ul li a:hover{transform:translateX(-5px);opacity:0.8;}
+#overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.4);
+  opacity:0; pointer-events:none; transition:opacity 0.4s ease; z-index:999;
+  backdrop-filter:blur(0px);
+}
+body.menu-open #sideMenu{right:0;}
+body.menu-open #overlay{opacity:1; pointer-events:auto; backdrop-filter:blur(4px);}
+body.menu-open #menuToggle .bar:nth-child(1){transform:rotate(45deg) translate(7px,7px);}
+body.menu-open #menuToggle .bar:nth-child(2){opacity:0;}
+body.menu-open #menuToggle .bar:nth-child(3){transform:rotate(-45deg) translate(7px,-7px);}
+@media(max-width:600px){header h1{font-size:2rem} header p{font-size:1rem} #sideMenu{width:60%; right:-60%;} body.menu-open #sideMenu{right:0;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Booking Photo Booth</h1>
+  <p>Pilih layanan terbaik untuk event Anda</p>
+</header>
+
+<div class="container">
+
+  <div class="card" id="choiceSection">
+    <h2>Pilih Jenis Booking</h2>
+    <div class="choices">
+      <div class="choice locked">
+        <img src="img/business.png" alt="Kerja Sama">
+        <h3>Sharing Profit</h3>
+        <p>Kolaborasi & partnership</p>
+        <button class="btn">Pilih</button>
+      </div>
+      <div class="choice locked">
+        <img src="img/camera.png" alt="Sewa">
+        <h3>Sewa Bagi Hasil</h3>
+        <p>Wedding & event</p>
+        <button class="btn">Pilih</button>
+      </div>
+      <div class="choice locked">
+        <img src="img/troly.png" alt="Franchise">
+        <h3>Franchise</h3>
+        <p>Pembelian unit</p>
+        <button class="btn">Pilih</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="formSection">
+    <h2>Detail Booking</h2>
+    <form onsubmit="sendWA(event)">
+      <input id="bookingType" class="full" readonly>
+      <input id="name" placeholder="Nama Lengkap" required>
+      <input id="phone" placeholder="Nomor WhatsApp" required>
+      <input id="date" type="date" required>
+      <textarea id="address" class="full" placeholder="Alamat / Lokasi" required></textarea>
+      <textarea id="note" class="full" placeholder="Catatan tambahan"></textarea>
+      <div class="full">
+        <button class="btn">Kirim via WhatsApp</button>
+      </div>
+      <div class="full" style="margin-top:10px;">
+        <button type="button" class="btn" id="sendEmailBtn">Kirim via Email</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<footer>© 2026 Photo Booth Booking</footer>
+
+<!-- MODAL GUIDE -->
+<div class="modal" id="guideModal">
+  <div class="modal-content">
+    <h3>Tata Cara Booking</h3>
+    <p style="margin:15px 0;line-height:1.6;color:#555">
+      1. Pilih salah satu layanan: Sharing Profit, Sewa Bagi Hasil, atau Franchise.<br><br>
+      2. Isi data lengkap (nama, alamat, tanggal). Tanggal adalah waktu tim kami datang, disarankan <b>H-1</b> acara.<br><br>
+      3. Permintaan desain frame photo booth dapat ditulis di kolom <b>Catatan Tambahan</b>.
+    </p>
+    <div style="text-align:center">
+      <button class="btn" onclick="closeGuide()">Oke, Mengerti</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SERVICE -->
+<div class="modal" id="serviceModal">
+  <div class="modal-content">
+    <h3 id="serviceTitle"></h3>
+    <p id="serviceDesc" style="white-space:pre-line;color:#555;margin:16px 0"></p>
+    <div style="text-align:center">
+      <button class="btn" onclick="closeService()">Oke</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDE MENU -->
+<div id="menuToggle"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+<div id="sideMenu">
+  <h3 style="color:#fff;margin-bottom:20px;text-align:center">Kontak Kami</h3>
+  <ul>
+    <li><a href="https://www.instagram.com/keepcustom.studio?igsh=MTFxZmQ4OGtjY2NnZg==" target="_blank"><img src="https://img.icons8.com/ios-filled/24/ffffff/instagram-new.png"/> Instagram</a></li>
+    <li><a href="https://www.tiktok.com/@keepcustom.studio" target="_blank"><img src="https://img.icons8.com/ios-filled/24/ffffff/tiktok.png"/> TikTok</a></li>
+    <li><a href="https://wa.me/6282125072106" target="_blank"><img src="https://img.icons8.com/ios-filled/24/ffffff/whatsapp.png"/> WhatsApp</a></li>
+    <li><a href="mailto:rj.officer44@gmail.com"><img src="https://img.icons8.com/ios-filled/24/ffffff/new-post.png"/> Email</a></li>
+  </ul>
+</div>
+<div id="overlay"></div>
+
+<!-- EMAILJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+emailjs.init("nt33R_dMSGyI9VlmG");
+</script>
+
+<script>
+const guideModal = document.getElementById("guideModal");
+const serviceModal = document.getElementById("serviceModal");
+const serviceTitle = document.getElementById("serviceTitle");
+const serviceDesc = document.getElementById("serviceDesc");
+const choices = document.querySelectorAll(".choice");
+const formSection = document.getElementById("formSection");
+
+const desc = {
+  "Sharing Profit": "Sharing Profit Skema kerjanya sama dengan individu, brand, event organizer, maupun partner bisnis untuk menghadirkan layanan photo booth dalam berbagai bentuk kolaborasi. Kerja sama dapat berupa project-based, event-based, maupun kerja sama jangka panjang sesuai kebutuhan dan konsep acara.",
+  "Sewa Bagi Hasil": "Sewa Bagi Hasil adalah layanan penyewaan photo booth untuk berbagai acara, di mana tamu dapat berfoto secara mandiri atau dibantu oleh crew, dengan hasil foto yang langsung dicetak maupun dikirim dalam bentuk digital. Layanan ini dirancang untuk menambah pengalaman interaktif dan hiburan dalam acara, sekaligus menjadi media untuk mengabadikan momen kebersamaan secara kreatif.",
+  "Franchise": "Layanan penjualan unit photo booth yang dirancang khusus untuk mendukung kebutuhan bisnis dan operasional berbagai skala usaha. Setiap unit dikembangkan dengan mempertimbangkan aspek fungsionalitas, kemudahan penggunaan, serta tampilan menarik. Spesifikasi unit dapat disesuaikan sesuai kebutuhan, mulai dari desain booth, jenis kamera, sistem pencahayaan, perangkat lunak, hingga branding dan fitur pendukung lainnya."
+};
+
+const templates = {
+  "Kerja Sama Photo Booth": "Halo, saya ingin melakukan kerja sama photo booth untuk event kami...",
+  "Sewa Photo Booth": "Halo, saya ingin menyewa photo booth pada tanggal berikut...",
+  "Purchase Photo Booth": "Halo, saya ingin membeli unit photo booth..."
+};
+
+let selected = "";
+
+window.onload = () => {
+  guideModal.classList.add("show");
+  setTimeout(()=>document.getElementById("choiceSection").classList.add("show"),200);
+};
+
+function closeGuide(){
+  guideModal.classList.remove("show");
+  choices.forEach((c,i)=>{
+    c.classList.remove("locked");
+    c.onclick = () => openService(Object.keys(desc)[i], c);
+  });
+}
+
+function openService(type, choiceElement){
+  choices.forEach(c=>c.classList.remove('selected'));
+  choiceElement.classList.add('selected');
+  selected = type;
+  serviceTitle.innerText = type;
+  serviceDesc.innerText = desc[type];
+  serviceModal.classList.add("show");
+}
+
+function closeService(){
+  serviceModal.classList.remove("show");
+  formSection.classList.add("show");
+  document.getElementById("bookingType").value = selected;
+  formSection.scrollIntoView({behavior:"smooth"});
+  choices.forEach(c=>c.classList.remove('selected'));
+}
+
+function validateForm(){
+  const phone = document.getElementById("phone").value.trim();
+  const date = document.getElementById("date").value;
+  const address = document.getElementById("address").value.trim();
+  let errors = [];
+  if(!/^08\d{7,}$/.test(phone)){ errors.push("Nomor WA tidak valid"); }
+  const today = new Date();
+  const minDate = new Date(today.getTime() + 24*60*60*1000);
+  if(new Date(date) < minDate){ errors.push("Tanggal minimal H-1 Acara"); }
+  if(address === ""){ errors.push("Alamat tidak boleh kosong"); }
+  return errors;
+}
+
+function sendWA(e){
+  e.preventDefault();
+  const errors = validateForm();
+  if(errors.length){ alert(errors.join("\n")); return; }
+  const msg = `${templates[selected]}
+Nama: ${document.getElementById("name").value}
+No WA: ${document.getElementById("phone").value}
+Tanggal: ${document.getElementById("date").value}
+Alamat: ${document.getElementById("address").value}
+Catatan: ${document.getElementById("note").value}
+Link Lokasi: https://www.google.com/maps/search/${encodeURIComponent(document.getElementById("address").value)}
+`;
+  window.open("https://wa.me/6282125072106?text="+encodeURIComponent(msg), "_blank");
+}
+
+document.getElementById("sendEmailBtn").addEventListener("click", function() {
+  const errors = validateForm();
+  if(errors.length){ alert(errors.join("\n")); return; }
+
+  const templateParams = {
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    fromName: document.getElementById("name").value,
+    fromPhone: document.getElementById("phone").value,
+    from_name: document.getElementById("name").value,
+    from_phone: document.getElementById("phone").value,
+    booking_type: selected,
+    date: document.getElementById("date").value,
+    address: document.getElementById("address").value,
+    note: document.getElementById("note").value,
+    maps_link: "https://www.google.com/maps/search/" + encodeURIComponent(document.getElementById("address").value)
+  };
+
+  emailjs.send("service_afignlg", "template_zvvch8u", templateParams)
+    .then(function(response){
+      alert("Email berhasil dikirim ✅");
+    }, function(error){
+      alert("Gagal mengirim email, silahkan coba lagi ❎");
+      console.log(error);
+    });
+});
+
+const menuToggle = document.getElementById("menuToggle");
+const overlay = document.getElementById("overlay");
+menuToggle.addEventListener("click", ()=>{ document.body.classList.toggle("menu-open"); });
+overlay.addEventListener("click", ()=>{ document.body.classList.remove("menu-open"); });
+</script>
+
+</body>
+</html>
